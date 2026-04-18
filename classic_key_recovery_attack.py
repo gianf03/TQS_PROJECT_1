@@ -14,8 +14,8 @@ def brute_force(plaintext, ciphertext):
         decryption = decrypt(ciphertext, subKey1, subKey2)
 
         if (decryption == plaintext):
-            #print("Chiave usata:\t", bitKey)
-            return 
+            print("Chiave usata:\t", bitKey)
+            #return 
 
 
 

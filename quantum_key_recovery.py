@@ -1,6 +1,8 @@
 from qiskit import QuantumCircuit
 from qiskit_aer import Aer
 import math
+from qiskit.compiler import transpile
+import matplotlib.pyplot as plt
 
 
 # =========================================================
@@ -93,7 +95,7 @@ def grover_attack(secret_key):
 # RUN SIMULAZIONE
 # =========================================================
 def run():
-    secret_key = "1101010011"  # 10 bit S-DES key
+    secret_key = "1010101010"  # 10 bit S-DES key
 
     qc = grover_attack(secret_key)
 
@@ -105,6 +107,44 @@ def run():
 
     print("\n=== RISULTATO GROVER ===")
     print(counts)
+
+    """"
+    # Ordina per frequenza (opzionale ma consigliato)
+    sorted_results = dict(sorted(counts.items(), key=lambda x: x[1], reverse=True))
+
+    labels = list(sorted_results.keys())
+    values = list(sorted_results.values())
+
+    plt.figure(figsize=(18, 6))
+
+    plt.bar(labels, values)
+
+    plt.xticks(rotation=90, fontsize=6)
+    plt.ylabel("Frequenza di misurazione")
+    plt.xlabel("Stati binari (candidati chiave)")
+    plt.title("Risultato simulazione Grover")
+
+    plt.tight_layout()
+    plt.show()
+    """
+
+    top_n = 20
+    sorted_results = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:top_n]
+
+    labels = [k for k, v in sorted_results]
+    values = [v for k, v in sorted_results]
+
+    plt.figure(figsize=(12, 6))
+    plt.bar(labels, values)
+
+    plt.xticks(rotation=90)
+    plt.ylabel("Frequenza")
+    plt.title("Top 20 candidati Grover")
+
+    plt.tight_layout()
+    plt.show()
+
+    
 
 
 if __name__ == "__main__":
