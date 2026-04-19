@@ -10,8 +10,8 @@ import operator
 print("🤖 Inizializzazione dell'Attacco KPA Quantistico con S-DES...")
     
 # Valori di esempio (assicurati che corrispondano a una vera coppia generata dal tuo S-DES classico)
-plaintext_target = '11100011'
-ciphertext_target = '10101010' 
+plaintext_target = '10101010'
+ciphertext_target = '01101011' 
 
 # NUOVI PARAMETRI AGGIORNATI
 TOTAL_QUBITS = 31
@@ -33,7 +33,7 @@ print("   -> Costruzione dei gate...")
 oracle_gate = build_sdes_oracle(plaintext_target, ciphertext_target).to_gate()
 diffuser_gate = build_diffuser(NUM_KEY_QUBITS)
 
-iterations = 1 # Manteniamo a 1 per non bloccare il PC  
+iterations = 2 # Manteniamo a 1 per non bloccare il PC  
 
 print(f"   -> Aggiunta di {iterations} iterazioni di Grover al circuito...")
 for i in range(iterations):
