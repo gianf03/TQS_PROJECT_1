@@ -19,20 +19,21 @@ class KeyGenerator:
         self.P10_order = [2, 4, 1, 6, 3, 9, 0, 8, 7, 5]   # permutazione iniziale della chiave
         self.P8_order = [5, 2, 6, 3, 7, 4, 9, 8]          # permutazione trascurando i primi due bit della chiave
         self.LeftShift1_order = [1, 2, 3, 4, 0]           # shift di un bit a sinistra
+        self.LeftShift2_order = [2, 3, 4, 0, 1] 
 
     def get_subkeys_indices(self, key_qubits):
         x = apply_pbox(key_qubits, self.P10_order)        # permutazione iniziale della chiave di 10 bit
         left, right = q_split(x)                          # split della permutazione in due sotto-parti di 5 bit
         
-        left = apply_pbox(left, self.LeftShift1_order)
-        right = apply_pbox(right, self.LeftShift1_order)
+        leftK1 = apply_pbox(left, self.LeftShift1_order)
+        rightK1 = apply_pbox(right, self.LeftShift1_order)
         
-        k1_indices = apply_pbox(q_merge(left, right), self.P8_order)     # primi due bit trascurati, si applica permutazione sui restanti 8
+        k1_indices = apply_pbox(q_merge(leftK1, rightK1), self.P8_order)
         
-        left = apply_pbox(left, self.LeftShift1_order)
-        right = apply_pbox(right, self.LeftShift1_order)
+        leftK2 = apply_pbox(leftK1, self.LeftShift2_order)
+        rightK2 = apply_pbox(rightK1, self.LeftShift2_order)
         
-        k2_indices = apply_pbox(q_merge(left, right), self.P8_order)
+        k2_indices = apply_pbox(q_merge(leftK2, rightK2), self.P8_order)
         
         return k1_indices, k2_indices
 
@@ -123,10 +124,12 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
     # --- DEFINIZIONE DEL CALCOLO FORWARD (Cifratura) ---
     forward_qc = QuantumCircuit(TOTAL_QUBITS, name="S-DES_Forward")
     
+    """"
     # flip dei qubit a 1 del plaintext
-    for i, bit in enumerate(plaintext_bin_str):
-        if bit == '1':
-            forward_qc.x(work_text[i])
+    #for i, bit in enumerate(plaintext_bin_str):
+    #    if bit == '1':
+    #        forward_qc.x(work_text[i])
+    """
             
     # si applica la permutazione iniziale al plaintext e poi lo si divide in due parti
     current_text = apply_pbox(work_text, IP_order)
@@ -170,8 +173,19 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
     # 3. LP
     final_text = apply_pbox(q_merge(L, R), LP_order)
     
-    qc.append(forward_qc.to_gate(), range(TOTAL_QUBITS))
+    #qc.append(forward_qc.to_gate(), range(TOTAL_QUBITS))
     
+
+    #### MODIFICA TEMPORANEA #####
+    # PRIMA del forward (aggiungi prima di qc.append(forward_qc...))
+    for i, bit in enumerate(plaintext_bin_str):
+        if bit == '1':
+            qc.x(work_text[i])
+    
+    qc.append(forward_qc.to_gate(), range(TOTAL_QUBITS))
+    #### MODIFICA TEMPORANEA #####
+
+
     # --- FASE DEL MATCH ---
     for i, bit in enumerate(ciphertext_bin_str):
         if bit == '0':
@@ -185,6 +199,14 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
             
     # --- UNCOMPUTATION ---
     qc.append(forward_qc.inverse().to_gate(), range(TOTAL_QUBITS))
+
+
+    ##### MODIFICA TEMPORANEA #####
+    # DOPO l'uncomputation (aggiungi alla fine)
+    for i, bit in enumerate(plaintext_bin_str):
+        if bit == '1':
+            qc.x(work_text[i])
+    #### MODIFICA TEMPORANEA #####
     
     return qc
 

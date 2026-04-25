@@ -34,7 +34,7 @@ oracle_gate = build_sdes_oracle(plaintext_target, ciphertext_target).to_gate()
 #diffuser_gate = build_diffuser(NUM_KEY_QUBITS)
 diffuser_gate = build_diffuser_not_simulated_mcz(NUM_KEY_QUBITS)
 
-iterations = 13 # valore ottimale ottenuto dalla formula: parte intera inferiore di { pi/4 * sqrt(N/M) } dove N possibili chiavi ed M valore medio di chiavi possibili per una generica coppia cifrato - testo in chiaro  
+iterations = 1 # valore ottimale ottenuto dalla formula: parte intera inferiore di { pi/4 * sqrt(N/M) } dove N possibili chiavi ed M valore medio di chiavi possibili per una generica coppia cifrato - testo in chiaro  
 
 print(f"   -> Aggiunta di {iterations} iterazioni di Grover al circuito...")
 for i in range(iterations):
@@ -50,8 +50,8 @@ main_qc.measure(range(NUM_KEY_QUBITS), range(NUM_KEY_QUBITS))
 print("\n🎨 Generazione della mappa del circuito...")
 # Stampiamo una versione testuale (fold disattivato per non spezzare le linee se lo schermo è largo)
 # Nota: su terminali piccoli potrebbe andare a capo in modo confusionario.
-main_qc.draw('text', fold=-1)
-#print(main_qc.draw('text', fold=-1))
+#main_qc.draw('mpl', fold=-1)
+print(main_qc.draw('text', fold=-1))
 
 # Se vuoi l'immagine bella su Jupyter Notebook o salvarla come file:
 # fig = main_qc.draw('mpl')
@@ -96,9 +96,7 @@ for i in range(min(20, len(sorted_counts))):
     reversed_key = key_str[::-1] 
     
     prob = (count / shots) * 100          
-    print(f"{i+1}. Chiave Binaria: {reversed_key} | Array: [{', '.join(reversed_key)}] -> Misurata {count} volte ({prob:.1f}%)")
-    
-print("\n💡 Nota: Per distaccare nettamente la chiave corretta dalle altre servono ~25 iterazioni.")
+    print(f"{i+1}. Chiave Binaria: {reversed_key} | Array: [{', '.join(reversed_key)}] -> Misurata {count} volte ({prob:.3f}%)")
 
 
 plt.show()
