@@ -105,8 +105,8 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
     TOTAL_QUBITS = 31
     qc = QuantumCircuit(TOTAL_QUBITS, name="S-DES_Oracle")
     
-    key_qubits = list(range(10))
-    work_text = list(range(10, 18))
+    key_qubits = list(range(10))            # chiave di 10 bit
+    work_text = list(range(10, 18))         # testo in chiaro di 8 bit
     ancillas = list(range(18, 26))
     sbox_outs = list(range(26, 30))
     phase_qubit = 30
