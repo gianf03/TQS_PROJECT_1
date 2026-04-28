@@ -14,25 +14,26 @@ def q_merge(left, right):
 def apply_pbox(qubit_indices, out_order):
     return [qubit_indices[i] for i in out_order]
 
-class QuantumKeyGenerator:
+class KeyGenerator:
     def __init__(self):
-        self.P10_order = [2, 4, 1, 6, 3, 9, 0, 8, 7, 5]
-        self.P8_order = [5, 2, 6, 3, 7, 4, 9, 8]
-        self.LeftShift1_order = [1, 2, 3, 4, 0]
+        self.P10_order = [2, 4, 1, 6, 3, 9, 0, 8, 7, 5]   # permutazione iniziale della chiave
+        self.P8_order = [5, 2, 6, 3, 7, 4, 9, 8]          # permutazione trascurando i primi due bit della chiave
+        self.LeftShift1_order = [1, 2, 3, 4, 0]           # shift di un bit a sinistra
+        self.LeftShift2_order = [2, 3, 4, 0, 1] 
 
     def get_subkeys_indices(self, key_qubits):
-        x = apply_pbox(key_qubits, self.P10_order)
-        left, right = q_split(x)
+        x = apply_pbox(key_qubits, self.P10_order)        # permutazione iniziale della chiave di 10 bit
+        left, right = q_split(x)                          # split della permutazione in due sotto-parti di 5 bit
         
-        left = apply_pbox(left, self.LeftShift1_order)
-        right = apply_pbox(right, self.LeftShift1_order)
+        leftK1 = apply_pbox(left, self.LeftShift1_order)
+        rightK1 = apply_pbox(right, self.LeftShift1_order)
         
-        k1_indices = apply_pbox(q_merge(left, right), self.P8_order)
+        k1_indices = apply_pbox(q_merge(leftK1, rightK1), self.P8_order)
         
-        left = apply_pbox(left, self.LeftShift1_order)
-        right = apply_pbox(right, self.LeftShift1_order)
+        leftK2 = apply_pbox(leftK1, self.LeftShift2_order)
+        rightK2 = apply_pbox(rightK1, self.LeftShift2_order)
         
-        k2_indices = apply_pbox(q_merge(left, right), self.P8_order)
+        k2_indices = apply_pbox(q_merge(leftK2, rightK2), self.P8_order)
         
         return k1_indices, k2_indices
 
@@ -44,11 +45,14 @@ def build_sbox_gate(sbox_matrix, name="SBox"):
     Crea un gate quantistico a 6 qubit (4 input + 2 output ancilla)
     scrivendo la tabella di verità con porte Multi-Controlled-X (Toffoli).
     """
-    qc = QuantumCircuit(6, name=name)
+
+    # creo circuito con un registro di 6 qubit
+    qc = QuantumCircuit(6, name=name)    
     
     # Cicliamo su tutti i 16 possibili input a 4 bit
     for val in range(16):
-        b_str = format(val, '04b')
+        # trasformo val in un binario di 4 bit (aggiungendo zeri davanti se necessario)
+        b_str = format(val, '04b')    
         b0, b1, b2, b3 = int(b_str[0]), int(b_str[1]), int(b_str[2]), int(b_str[3])
         
         # Logica classica per trovare riga e colonna
@@ -58,27 +62,29 @@ def build_sbox_gate(sbox_matrix, name="SBox"):
         out_val = sbox_matrix[row][col]
         out_str = format(out_val, '02b')
         
-        # 1. Capovolgi i qubit di input che sono '0' per attivare l'MCX
+        # i qubit di input che sono '0' vengono negati usando Pauli-x
         for i, bit in enumerate(b_str):
             if bit == '0':
                 qc.x(i)
                 
-        # 2. Applica MCX agli ancilla di output se il bit di output deve essere '1'
+        # la porta MCX controlla tutti i qubit di input della S-box; se s1 = 1, il primo qubit ancilla viene negato applicando Pauli-x; se s2 = 1, il secondo qubit ancilla viene negato applicando Pauli-x
         if out_str[0] == '1':
             qc.mcx([0, 1, 2, 3], 4)
         if out_str[1] == '1':
             qc.mcx([0, 1, 2, 3], 5)
             
-        # 3. UNCOMPUTATION: Ripristina gli input
+        # ripristino i bit di input che sono stati portati a 1 per applicare MCX. Operazione possibile perché nel mondo quantum le operazioni sono reversibili
         for i, bit in enumerate(b_str):
             if bit == '0':
                 qc.x(i)
                 
+    # si restituisce il circuito trasformato in porta (da poter usare come bulding block per un circuito più complesso)
     return qc.to_gate()
 
 # Matrici SBox classiche
-SBox1_matrix = [[1, 0, 3, 2], [3, 2, 1, 0], [0, 2, 1, 3], [3, 1, 0, 2]]
-SBox2_matrix = [[0, 1, 2, 3], [2, 3, 0, 1], [3, 0, 1, 2], [2, 1, 0, 3]]
+
+SBox1_matrix = [[1, 0, 3, 2], [3, 2, 1, 0], [0, 2, 1, 3], [3, 1, 3, 2]]
+SBox2_matrix = [[0, 1, 2, 3], [2, 0, 1, 3], [3, 0, 1, 0], [2, 1, 0, 3]]
 
 sbox1_gate = build_sbox_gate(SBox1_matrix, "SBox1")
 sbox2_gate = build_sbox_gate(SBox2_matrix, "SBox2")
@@ -91,37 +97,41 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
     Costruisce l'oracolo di Grover per un Known Plaintext Attack (KPA).
     """
     
-    # NUOVA GESTIONE QUBIT:
+    # GESTIONE QUBIT:
     # Qubits 0-9: Chiave in superposizione (10 qubit)
     # Qubits 10-17: Spazio di lavoro per il cifrato (8 qubit)
-    # Qubits 18-25: Ancillas per l'Espansione a 8 bit (8 qubit)
-    # Qubits 26-29: Ancillas per l'Output delle S-Box (4 qubit) <-- NUOVI!
+    # Qubits 18-25: Ancille per l'Espansione a 8 bit (8 qubit)
+    # Qubits 26-29: Ancille per l'Output delle S-Box (4 qubit)
     # Qubit 30: Qubit di Fase per Grover (1 qubit)
     TOTAL_QUBITS = 31
     qc = QuantumCircuit(TOTAL_QUBITS, name="S-DES_Oracle")
     
-    key_qubits = list(range(10))
-    work_text = list(range(10, 18))
+    key_qubits = list(range(10))            # chiave di 10 bit
+    work_text = list(range(10, 18))         # testo in chiaro di 8 bit
     ancillas = list(range(18, 26))
-    sbox_outs = list(range(26, 30))  # I nostri nuovi qubit di appoggio
+    sbox_outs = list(range(26, 30))
     phase_qubit = 30
     
-    key_gen = QuantumKeyGenerator()
-    k1_idx, k2_idx = key_gen.get_subkeys_indices(key_qubits)
+    key_gen = KeyGenerator()
+    k1_idx, k2_idx = key_gen.get_subkeys_indices(key_qubits)   # ottengo le sottochiavi dalla master key
     
     # Ordini di permutazione
     IP_order = [1, 5, 2, 0, 3, 7, 4, 6]
     EP_order = [3, 0, 1, 2, 1, 2, 3, 0]
-    SP_order = [1, 3, 2, 0]
-    LP_order = [3, 0, 2, 4, 6, 1, 7, 5]
+    SP_order = [1, 3, 2, 0]                # ??
+    LP_order = [3, 0, 2, 4, 6, 1, 7, 5]    # ??
 
     # --- DEFINIZIONE DEL CALCOLO FORWARD (Cifratura) ---
     forward_qc = QuantumCircuit(TOTAL_QUBITS, name="S-DES_Forward")
     
-    for i, bit in enumerate(plaintext_bin_str):
-        if bit == '1':
-            forward_qc.x(work_text[i])
+    """"
+    # flip dei qubit a 1 del plaintext
+    #for i, bit in enumerate(plaintext_bin_str):
+    #    if bit == '1':
+    #        forward_qc.x(work_text[i])
+    """
             
+    # si applica la permutazione iniziale al plaintext e poi lo si divide in due parti
     current_text = apply_pbox(work_text, IP_order)
     L, R = q_split(current_text)
 
@@ -135,7 +145,7 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
         for i in range(8):
             forward_qc.cx(k_idx[i], ancillas[i])
             
-        # c. S-Box (ORA CORRETTO: usiamo i nuovi qubit sbox_outs)
+        # c. S-Box
         forward_qc.append(sbox1_gate, ancillas[0:4] + sbox_outs[0:2])
         forward_qc.append(sbox2_gate, ancillas[4:8] + sbox_outs[2:4])
         
@@ -163,8 +173,19 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
     # 3. LP
     final_text = apply_pbox(q_merge(L, R), LP_order)
     
-    qc.append(forward_qc.to_gate(), range(TOTAL_QUBITS))
+    #qc.append(forward_qc.to_gate(), range(TOTAL_QUBITS))
     
+
+    #### MODIFICA TEMPORANEA #####
+    # PRIMA del forward (aggiungi prima di qc.append(forward_qc...))
+    for i, bit in enumerate(plaintext_bin_str):
+        if bit == '1':
+            qc.x(work_text[i])
+    
+    qc.append(forward_qc.to_gate(), range(TOTAL_QUBITS))
+    #### MODIFICA TEMPORANEA #####
+
+
     # --- FASE DEL MATCH ---
     for i, bit in enumerate(ciphertext_bin_str):
         if bit == '0':
@@ -178,6 +199,14 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
             
     # --- UNCOMPUTATION ---
     qc.append(forward_qc.inverse().to_gate(), range(TOTAL_QUBITS))
+
+
+    ##### MODIFICA TEMPORANEA #####
+    # DOPO l'uncomputation (aggiungi alla fine)
+    for i, bit in enumerate(plaintext_bin_str):
+        if bit == '1':
+            qc.x(work_text[i])
+    #### MODIFICA TEMPORANEA #####
     
     return qc
 
