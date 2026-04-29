@@ -172,9 +172,6 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
 
     # 3. LP
     final_text = apply_pbox(q_merge(L, R), LP_order)
-    
-    #qc.append(forward_qc.to_gate(), range(TOTAL_QUBITS))
-    
 
     #### MODIFICA TEMPORANEA #####
     # PRIMA del forward (aggiungi prima di qc.append(forward_qc...))

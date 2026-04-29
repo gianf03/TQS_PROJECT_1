@@ -1,4 +1,4 @@
-from sdes import generate_keys, encrypt, decrypt
+from sdes import generate_keys, decrypt
 import bitarray
 import time
 import os
