@@ -24,7 +24,7 @@ main_qc.x(PHASE_QUBIT)   # il qubit passa da |0> a |1>
 main_qc.h(PHASE_QUBIT)   # il qubit passa da |1> a |-> 
 
 # Costruzione del gate associato all'oracolo (riguarda tutti qubit)
-oracle_gate = build_sdes_oracle(plaintext_target, ciphertext_target).to_gate()
+oracle_gate = build_sdes_oracle(plaintext_target, ciphertext_target)
 # Costruzione del gate associato al diffuser (riguarda solo i qubit associati alla chiave)
 diffuser_gate = build_diffuser(NUM_KEY_QUBITS)
 
@@ -38,7 +38,7 @@ for i in range(iterations):
 # Misurazione finale
 main_qc.measure(range(NUM_KEY_QUBITS), range(NUM_KEY_QUBITS))
 
-# STAMPA DEL CIRCUITO
+# Stampa circuito finale
 print(main_qc.draw('text', fold=-1))
 
 # Inizializzazione del simulatore

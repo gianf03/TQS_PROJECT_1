@@ -19,4 +19,6 @@ def build_diffuser(num_key_qubits):
     qc.x(range(num_key_qubits)) # undo Pauli-X
     qc.h(range(num_key_qubits)) # undo Hadamard
 
+    print(qc.draw('text', fold=-1))
+
     return qc.to_gate()
