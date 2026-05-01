@@ -13,7 +13,7 @@ TOTAL_QUBITS = 31
 NUM_KEY_QUBITS = 10
 PHASE_QUBIT = 30  # 31-esimo qubit
 
-# Crezione circuito principale (31 qubit quantistici, di cui 10 destinati alla chiave)
+# Crezione circuito principale (31 qubit quantistici, di cui 10 destinati alla chiave che andranno misurati)
 main_qc = QuantumCircuit(TOTAL_QUBITS, NUM_KEY_QUBITS)
 
 # Si portano in superposizione i qubit della chiave
@@ -38,8 +38,9 @@ for i in range(iterations):
 # Misurazione finale
 main_qc.measure(range(NUM_KEY_QUBITS), range(NUM_KEY_QUBITS))
 
-# Stampa circuito finale
-print(main_qc.draw('text', fold=-1))
+
+fig = main_qc.draw('mpl', fold=-1, scale=1)
+fig.savefig('final_circuit.png', dpi=150, bbox_inches='tight')
 
 # Inizializzazione del simulatore
 simulator = AerSimulator(method='matrix_product_state') # Si rappresenta lo stato quantistico con il metodo MPS per aggirare i limiti della RAM (con statevector ci vorrebbero almeno 35 GB)

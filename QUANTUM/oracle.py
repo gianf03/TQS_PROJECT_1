@@ -29,7 +29,7 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
     SP_order = [1, 3, 2, 0]            
     LP_order = [3, 0, 2, 4, 6, 1, 7, 5]    
 
-    # realizzazione circuito che fa cifratura del plaintext
+    # Creazione circuito che implementa la cifratura (da usare come building block nell'oracolo) 
     forward_qc = QuantumCircuit(TOTAL_QUBITS, name="S-DES_Forward")
             
     # Applicazione  della permutazione iniziale al plaintext e successiva divisione in due parti
@@ -102,6 +102,9 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
         if bit == '1':
             qc.x(work_text[i])
 
-    print(qc.draw('text', fold=-1))
+    fig1 = forward_qc.draw('mpl', fold=-1, scale=1)
+    fig1.savefig('forward.png', dpi=150, bbox_inches='tight')
+    fig2 = qc.draw('mpl', fold=-1, scale=1)
+    fig2.savefig('oracle.png', dpi=150, bbox_inches='tight')
 
     return qc.to_gate()
