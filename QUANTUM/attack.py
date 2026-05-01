@@ -40,7 +40,7 @@ main_qc.measure(range(NUM_KEY_QUBITS), range(NUM_KEY_QUBITS))
 
 
 fig = main_qc.draw('mpl', fold=-1, scale=1)
-fig.savefig('final_circuit.png', dpi=150, bbox_inches='tight')
+#fig.savefig('final_circuit.png', dpi=150, bbox_inches='tight')
 
 # Inizializzazione del simulatore
 simulator = AerSimulator(method='matrix_product_state') # Si rappresenta lo stato quantistico con il metodo MPS per aggirare i limiti della RAM (con statevector ci vorrebbero almeno 35 GB)

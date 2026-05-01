@@ -20,6 +20,6 @@ def build_diffuser(num_key_qubits):
     qc.h(range(num_key_qubits)) # undo Hadamard
 
     fig = qc.draw('mpl', fold=-1, scale=0.8)
-    fig.savefig('diffuser.png', dpi=150, bbox_inches='tight')
+    #fig.savefig('diffuser.png', dpi=150, bbox_inches='tight')
 
     return qc.to_gate()

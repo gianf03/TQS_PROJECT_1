@@ -35,7 +35,7 @@ def build_sbox_gate(sbox_matrix, name="SBox"):
                 
 
     fig = qc.draw('mpl', fold=-1, scale=1)
-    fig.savefig('CIRCUITS/sbox.png', dpi=150, bbox_inches='tight')
+    #fig.savefig('CIRCUITS/sbox.png', dpi=150, bbox_inches='tight')
 
     # restituzione circuito sotto forma di porta (da poter usare come bulding block per un circuito più complesso)
     return qc.to_gate()

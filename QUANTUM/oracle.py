@@ -103,8 +103,8 @@ def build_sdes_oracle(plaintext_bin_str, ciphertext_bin_str):
             qc.x(work_text[i])
 
     fig1 = forward_qc.draw('mpl', fold=-1, scale=1)
-    fig1.savefig('forward.png', dpi=150, bbox_inches='tight')
+    #fig1.savefig('forward.png', dpi=150, bbox_inches='tight')
     fig2 = qc.draw('mpl', fold=-1, scale=1)
-    fig2.savefig('oracle.png', dpi=150, bbox_inches='tight')
+    #fig2.savefig('oracle.png', dpi=150, bbox_inches='tight')
 
     return qc.to_gate()
