@@ -1,8 +1,6 @@
 from sdes import encrypt, generate_keys
 import bitarray
-# Analisi su tutte le 256 coppie (P, C) possibili
 from collections import Counter
-import random
 
 distribution = Counter()
 total_pairs_tested = 0
